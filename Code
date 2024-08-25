@@ -1,0 +1,83 @@
+#include <Adafruit_ADS1X15.h>
+#include <LiquidCrystal_I2C.h>
+#define BLYNK_PRINT Serial
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
+//Adafruit_ADS1015 ads;     /* Use this for the 12-bit version */
+
+char auth[] = "DZQZGuh0oB0dDPp3DyjvaDH1P6KNWJFL";   //enter your token from email
+char ssid[] = "POCO X3 Pro";              //enter your wifi username
+char pass[] = "krushna@2003";//enter your wifi password
+
+ 
+void setup(void) 
+{
+  Serial.begin(115200);
+   Blynk.begin(auth, ssid, pass);
+  Serial.println("Getting single-ended readings from AIN0..3");
+  Serial.println("ADC Range: +/- 6.144V (1 bit = 3mV/ADS1015, 0.1875mV/ADS1115)");
+ 
+  lcd.init();
+  lcd.backlight();
+  if (!ads.begin())
+  {
+    Serial.println("Failed to initialize ADS.");
+    while (1);
+  }
+}
+ 
+void loop(void)
+{
+  Blynk.run();
+ 
+
+  int16_t adc0,adc1,adc2,adc3;
+  float volts0,volts1,volts2,volts3;
+ 
+  adc0 = ads.readADC_SingleEnded(0);
+  adc1 = ads.readADC_SingleEnded(1);
+  adc2 = ads.readADC_SingleEnded(2);
+  adc3 = ads.readADC_SingleEnded(3);
+
+ 
+  volts0 = ads.computeVolts(adc0);
+  volts1 = ads.computeVolts(adc1);
+  volts2 = ads.computeVolts(adc2);
+  volts3 = ads.computeVolts(adc3);
+  
+ 
+  Serial.println("-----------------------------------------------------------");
+  Serial.print("MQ-135:  "); Serial.print(adc0); Serial.print("  "); Serial.print(volts0); Serial.println("V");
+  Serial.print("KY-037:  "); Serial.print(adc1); Serial.print("  "); Serial.print(volts1); Serial.println("V");
+  Serial.print("Flame Sensor:  "); Serial.print(adc2); Serial.print("  "); Serial.print(volts2); Serial.println("V");
+  Serial.print("DHT 11 :  "); Serial.print(adc3); Serial.print("  "); Serial.print(volts3); Serial.println("V");
+
+
+  Blynk.virtualWrite(V6,adc0);
+  Blynk.virtualWrite(V7,adc1);
+  Blynk.virtualWrite(V1,adc2);
+  Blynk.virtualWrite(V3,adc3);
+  Blynk.virtualWrite(V8,volts0);
+  Blynk.virtualWrite(V9,volts1);
+  Blynk.virtualWrite(V2,volts2);
+  Blynk.virtualWrite(V4,volts3);
+  
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("MQ-135  ");
+  lcd.print(adc0);
+  lcd.print("  ");
+  lcd.print(volts0);
+  lcd.print("V");
+ 
+  lcd.setCursor(0, 1);
+  lcd.print("KY-037  ");
+  lcd.print(adc1);
+  lcd.print("  ");
+  lcd.print(volts1);
+  lcd.print("V");
+delay(1000);
+}
